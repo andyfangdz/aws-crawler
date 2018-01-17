@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "crawlexa_last_crawled" {
-  name           = "crawlexa_last_crawled"
-  read_capacity  = 5
-  write_capacity = 5
+  name           = "${var.project_name}_last_crawled"
+  read_capacity  = 1
+  write_capacity = 1
   hash_key       = "url_hash"
   range_key      = "last_crawled"
 
@@ -16,7 +16,7 @@ resource "aws_dynamodb_table" "crawlexa_last_crawled" {
   }
 
   tags {
-    project     = "crawlexa"
+    project     = "${var.project_name}"
     environment = "production"
   }
 

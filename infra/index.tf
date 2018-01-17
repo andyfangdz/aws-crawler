@@ -2,11 +2,11 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_sqs_queue" "crawlexa-jobs" {
-  name = "crawlexa-jobs"
+resource "aws_sqs_queue" "crawl-jobs" {
+  name = "${var.project_name}-jobs"
 
   tags {
-    project     = "crawlexa"
+    project     = "${var.project_name}"
     environment = "production"
   }
 }
