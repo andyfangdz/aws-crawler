@@ -10,4 +10,3 @@ resource "aws_sqs_queue" "crawl-jobs" {
     environment = "production"
   }
 }
-
