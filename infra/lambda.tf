@@ -25,17 +25,17 @@ resource "aws_iam_policy_attachment" "indexer_basicexec" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-data "archive_file" "indexer_zip" {
+data "archive_file" "src_zip" {
   type        = "zip"
-  source_dir  = "../indexer"
-  output_path = "build/indexer-lambda.zip"
+  source_dir  = "../src"
+  output_path = "build/lambda-src.zip"
 }
 
 resource "aws_lambda_function" "indexer" {
-  filename         = "${data.archive_file.indexer_zip.output_path}"
+  filename         = "${data.archive_file.src_zip.output_path}"
   function_name    = "${var.project_name}_indexer"
   role             = "${aws_iam_role.lambda_indexer.arn}"
   handler          = "main.handler"
-  source_code_hash = "${base64sha256(file("${data.archive_file.indexer_zip.output_path}"))}"
+  source_code_hash = "${base64sha256(file("${data.archive_file.src_zip.output_path}"))}"
   runtime          = "python3.6"
 }
