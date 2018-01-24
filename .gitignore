@@ -1,4 +1,5 @@
 .terraform
+tmp
 infra/build
 
 terraform.tfstate

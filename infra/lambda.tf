@@ -25,9 +25,27 @@ resource "aws_iam_policy_attachment" "indexer_basicexec" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy" "s3-dynamo-lambda" {
+    name = "dynamo-policy"
+    role = "${aws_iam_role.lambda_indexer.id}"
+    policy = <<EOF
+{
+    "Version": "2008-10-17",
+    "Statement": [
+        {
+            "Action": "dynamodb:*",
+            "Effect": "Allow",
+            "Resource": "${aws_dynamodb_table.crawlexa_last_crawled.arn}",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
 data "archive_file" "src_zip" {
   type        = "zip"
-  source_dir  = "../src"
+  source_dir  = "../build"
   output_path = "build/lambda-src.zip"
 }
 
@@ -35,7 +53,7 @@ resource "aws_lambda_function" "indexer" {
   filename         = "${data.archive_file.src_zip.output_path}"
   function_name    = "${var.project_name}_indexer"
   role             = "${aws_iam_role.lambda_indexer.arn}"
-  handler          = "main.handler"
+  handler          = "indexer.handler"
   source_code_hash = "${base64sha256(file("${data.archive_file.src_zip.output_path}"))}"
   runtime          = "python3.6"
 }
