@@ -8,7 +8,10 @@ resource "aws_iam_role" "lambda_indexer" {
     {
       "Action": "sts:AssumeRole",
       "Principal": {
-        "Service": "lambda.amazonaws.com"
+        "Service": [
+          "lambda.amazonaws.com",
+          "apigateway.amazonaws.com"
+        ]
       },
       "Effect": "Allow",
       "Sid": ""
@@ -56,4 +59,14 @@ resource "aws_lambda_function" "indexer" {
   handler          = "indexer.handler"
   source_code_hash = "${base64sha256(file("${data.archive_file.src_zip.output_path}"))}"
   runtime          = "python3.6"
+}
+
+resource "aws_lambda_permission" "apigw_lambda_indexer" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = "${aws_lambda_function.indexer.arn}"
+  principal     = "apigateway.amazonaws.com"
+
+  # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
+  source_arn = "arn:aws:execute-api:${var.project_region}:${var.project_accountId}:${aws_api_gateway_rest_api.crawler_api.id}/*/${aws_api_gateway_method.crawler_api_method.http_method}${aws_api_gateway_resource.crawler_api_resource.path}"
 }
