@@ -10,6 +10,8 @@ def handler(event, context):
         body = json.loads(event['body'])
         url = body['url']
         is_lambda_proxy = True
+    else:
+        url = event['url']
     r = requests.get(url)
     html = r.text
     soup = BeautifulSoup(html, 'html.parser')
