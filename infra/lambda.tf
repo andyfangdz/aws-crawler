@@ -28,8 +28,8 @@ resource "aws_iam_policy_attachment" "indexer_basicexec" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_iam_role_policy" "s3-dynamo-lambda" {
-    name = "dynamo-policy"
+resource "aws_iam_role_policy" "dynamo-lambda" {
+    name = "${var.project_name}-dynamo-policy"
     role = "${aws_iam_role.lambda_indexer.id}"
     policy = <<EOF
 {
@@ -39,6 +39,27 @@ resource "aws_iam_role_policy" "s3-dynamo-lambda" {
             "Action": "dynamodb:*",
             "Effect": "Allow",
             "Resource": "${aws_dynamodb_table.crawlexa_last_crawled.arn}",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "s3-lambda" {
+    name = "${var.project_name}-s3-policy"
+    role = "${aws_iam_role.lambda_indexer.id}"
+    policy = <<EOF
+{
+    "Version": "2008-10-17",
+    "Statement": [
+        {
+            "Action": "s3:*",
+            "Effect": "Allow",
+            "Resource": [
+              "${aws_s3_bucket.raw_html_files.arn}",
+              "${aws_s3_bucket.raw_html_files.arn}/*"
+            ],
             "Sid": ""
         }
     ]
@@ -59,6 +80,12 @@ resource "aws_lambda_function" "indexer" {
   handler          = "indexer.handler"
   source_code_hash = "${base64sha256(file("${data.archive_file.src_zip.output_path}"))}"
   runtime          = "python3.6"
+  environment {
+    variables = {
+      LAST_CRAWLED_TABLE = "${aws_dynamodb_table.crawlexa_last_crawled.name}"
+      RAW_BUCKET = "${aws_s3_bucket.raw_html_files.bucket}"
+    }
+  }
 }
 
 resource "aws_lambda_permission" "apigw_lambda_indexer" {

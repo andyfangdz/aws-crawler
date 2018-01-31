@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# build.sh - packages lambda source code w/ dependencies
+
 set +ex
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

@@ -3,16 +3,10 @@ resource "aws_dynamodb_table" "crawlexa_last_crawled" {
   read_capacity  = 1
   write_capacity = 1
   hash_key       = "url_hash"
-  range_key      = "last_crawled"
 
   attribute {
     name = "url_hash"
     type = "S"
-  }
-
-  attribute {
-    name = "last_crawled"
-    type = "N"
   }
 
   tags {
