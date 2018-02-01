@@ -1,3 +1,4 @@
+.dephash
 .terraform
 tmp
 infra/build

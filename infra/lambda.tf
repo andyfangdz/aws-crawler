@@ -23,15 +23,16 @@ EOF
 
 # Attach role to Managed Policy
 resource "aws_iam_policy_attachment" "indexer_basicexec" {
-  name = "${var.project_name}_indexer_LambdaExecPolicy"
-  roles = ["${aws_iam_role.lambda_indexer.id}"]
+  name       = "${var.project_name}_indexer_LambdaExecPolicy"
+  roles      = ["${aws_iam_role.lambda_indexer.id}"]
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 resource "aws_iam_role_policy" "dynamo-lambda" {
-    name = "${var.project_name}-dynamo-policy"
-    role = "${aws_iam_role.lambda_indexer.id}"
-    policy = <<EOF
+  name = "${var.project_name}-dynamo-policy"
+  role = "${aws_iam_role.lambda_indexer.id}"
+
+  policy = <<EOF
 {
     "Version": "2008-10-17",
     "Statement": [
@@ -47,9 +48,10 @@ EOF
 }
 
 resource "aws_iam_role_policy" "s3-lambda" {
-    name = "${var.project_name}-s3-policy"
-    role = "${aws_iam_role.lambda_indexer.id}"
-    policy = <<EOF
+  name = "${var.project_name}-s3-policy"
+  role = "${aws_iam_role.lambda_indexer.id}"
+
+  policy = <<EOF
 {
     "Version": "2008-10-17",
     "Statement": [
@@ -67,6 +69,25 @@ resource "aws_iam_role_policy" "s3-lambda" {
 EOF
 }
 
+resource "aws_iam_role_policy" "sns-lambda" {
+  name = "${var.project_name}-sns-policy"
+  role = "${aws_iam_role.lambda_indexer.id}"
+
+  policy = <<EOF
+{
+    "Version": "2008-10-17",
+    "Statement": [
+        {
+            "Action": "SNS:*",
+            "Effect": "Allow",
+            "Resource": "arn:aws:sns:*:*",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
 data "archive_file" "src_zip" {
   type        = "zip"
   source_dir  = "../build"
@@ -74,16 +95,20 @@ data "archive_file" "src_zip" {
 }
 
 resource "aws_lambda_function" "indexer" {
-  filename         = "${data.archive_file.src_zip.output_path}"
-  function_name    = "${var.project_name}_indexer"
-  role             = "${aws_iam_role.lambda_indexer.arn}"
-  handler          = "indexer.handler"
-  source_code_hash = "${base64sha256(file("${data.archive_file.src_zip.output_path}"))}"
-  runtime          = "python3.6"
+  filename                       = "${data.archive_file.src_zip.output_path}"
+  function_name                  = "${var.project_name}_indexer"
+  role                           = "${aws_iam_role.lambda_indexer.arn}"
+  handler                        = "indexer.handler"
+  source_code_hash               = "${base64sha256(file("${data.archive_file.src_zip.output_path}"))}"
+  runtime                        = "python3.6"
+  reserved_concurrent_executions = 100
+  timeout                        = 300
+
   environment {
     variables = {
       LAST_CRAWLED_TABLE = "${aws_dynamodb_table.crawlexa_last_crawled.name}"
-      RAW_BUCKET = "${aws_s3_bucket.raw_html_files.bucket}"
+      RAW_BUCKET         = "${aws_s3_bucket.raw_html_files.bucket}"
+      SNS_TOPIC          = "${aws_sns_topic.to_crawl.arn}"
     }
   }
 }
