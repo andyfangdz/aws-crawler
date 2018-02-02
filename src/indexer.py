@@ -92,8 +92,7 @@ def handler(event, context):
             }
             for url in urls_in_chunk:
                 url_hash = get_url_hash(url)
-                if url_hash not in last_crawled or last_crawled[url_hash] <= get_now_utc(
-                ) - ONE_DAY:
+                if url_hash not in last_crawled or last_crawled[url_hash] <= get_now_utc() - ONE_DAY:
                     should_crawl.append(url)
         for url in should_crawl:
             to_crawl_topic.publish(
